@@ -1,4 +1,4 @@
-.SUFFIXES: .dbk .html .dia .eps .png .pdf
+.SUFFIXES: .dbk .html .dia .eps .png .pdf .epub
 
 # To make this work, you need:
 # - perl, sed.
@@ -39,6 +39,9 @@ PDF = \
   spec.pdf errata.pdf changes.pdf index.pdf type.pdf map.pdf seq.pdf str.pdf \
   bool.pdf binary.pdf float.pdf int.pdf merge.pdf null.pdf \
   timestamp.pdf value.pdf yaml.pdf omap.pdf pairs.pdf set.pdf
+
+EPUB = \
+  spec.epub
 
 EPS_IMAGES = \
   logo.eps model2.eps overview2.eps \
@@ -85,6 +88,8 @@ html: $(HTML)
 
 pdf: $(PDF)
 
+epub: $(EPUB)
+
 spec: html
 	mkdir $@
 	perl -pi -e 's/YYYY-MM-DD/$(DATE)/g' spec.html
@@ -95,7 +100,7 @@ spec: html
 	chown -R --reference=Makefile $@
 
 clean:
-	rm -fr spec $(HTML) $(PDF) $(PS) tmp* docbook_xslt
+	rm -fr spec $(HTML) $(PDF) $(PS) tmp* docbook_xslt epub
 
 purge: clean
 	rm -fr $(PAGES_DIR)
@@ -124,6 +129,22 @@ $(HTML): single_html.xsl preprocess_html.xsl
 	dia $*.dia
 # Dia 0.93 offers no control over resolution:
 #	dia --export-to-format eps-pango $*.dia
+
+%.epub: epub/%
+	cd $<; zip -X0 ../$@ mimetype; zip -r -X9 ../$@ META-INF OEBPS
+
+epub/%: %.dbk docbook_xslt
+	mkdir -p $@
+	$(XSLTPROC) --stringparam base.dir $@ epub.xsl $<
+
+epub/spec: spec.dbk docbook_xslt
+	perl verify_lhs.pl < $<
+	perl verify_terms.pl
+	$(XSLTPROC) preprocess_epub.xsl $< > $<.tmp
+	mkdir -p $@
+	$(XSLTPROC) --stringparam base.dir $@ epub.xsl $<.tmp
+	rm $<.tmp
+	cp *.png $@/OEBPS/
 
 errata.pdf: errata.dbk Render-X-license.txt catalog docbook_xslt
 	$(XSLTPROC) single_fo.xsl errata.dbk | sed 's/\xa0/\&#160;/g;s/\xa9/\&#169;/' > tmp1.xml
