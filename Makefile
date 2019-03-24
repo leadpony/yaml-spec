@@ -25,6 +25,11 @@ XSLTPROC = SGML_CATALOG_FILES=catalog xsltproc --catalogs
 # Cygwin: /usr/share/docbook-xsl
 DOCBOOK_XSLT = /usr/share/xml/docbook/stylesheet/nwalsh
 
+DBK = \
+  spec.dbk errata.dbk changes.dbk index.dbk type.dbk map.dbk seq.dbk str.dbk \
+  bool.dbk binary.dbk float.dbk int.dbk merge.dbk null.dbk \
+  timestamp.dbk value.dbk yaml.dbk omap.dbk pairs.dbk set.dbk
+
 HTML = \
   spec.html errata.html changes.html index.html type.html map.html seq.html str.html \
   bool.html binary.html float.html int.html merge.html null.html \
@@ -40,8 +45,7 @@ PDF = \
   bool.pdf binary.pdf float.pdf int.pdf merge.pdf null.pdf \
   timestamp.pdf value.pdf yaml.pdf omap.pdf pairs.pdf set.pdf
 
-EPUB = \
-  spec.epub
+EPUB = $(DBK:.dbk=.epub)
 
 EPS_IMAGES = \
   logo.eps model2.eps overview2.eps \
@@ -140,10 +144,8 @@ epub/%: %.dbk docbook_xslt
 epub/spec: spec.dbk docbook_xslt
 	perl verify_lhs.pl < $<
 	perl verify_terms.pl
-	$(XSLTPROC) preprocess_epub.xsl $< > $<.tmp
 	mkdir -p $@
-	$(XSLTPROC) --stringparam base.dir $@ epub.xsl $<.tmp
-	rm $<.tmp
+	$(XSLTPROC) preprocess_epub.xsl $< | $(XSLTPROC) --stringparam base.dir $@ epub.xsl -
 	cp *.png $@/OEBPS/
 
 errata.pdf: errata.dbk Render-X-license.txt catalog docbook_xslt
