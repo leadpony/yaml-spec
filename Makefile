@@ -140,13 +140,14 @@ $(HTML): single_html.xsl preprocess_html.xsl
 epub/%: %.dbk docbook_xslt
 	mkdir -p $@
 	$(XSLTPROC) --stringparam base.dir $@ epub.xsl $<
+	cp *.css $@/OEBPS/
 
 epub/spec: spec.dbk docbook_xslt
 	perl verify_lhs.pl < $<
 	perl verify_terms.pl
 	mkdir -p $@
 	$(XSLTPROC) preprocess_epub.xsl $< | $(XSLTPROC) --stringparam base.dir $@ epub.xsl -
-	cp *.png $@/OEBPS/
+	cp *.png *.css $@/OEBPS/
 
 errata.pdf: errata.dbk Render-X-license.txt catalog docbook_xslt
 	$(XSLTPROC) single_fo.xsl errata.dbk | sed 's/\xa0/\&#160;/g;s/\xa9/\&#169;/' > tmp1.xml
